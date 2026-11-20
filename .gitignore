@@ -3,3 +3,5 @@ node_modules/
 .idea
 .vscode
 .DS_Store
+# working files of the README images (tools/readme-images)
+.scratch/

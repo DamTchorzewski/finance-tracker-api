@@ -1,8 +1,9 @@
 {
-  "name": "wallet",
+  "name": "personal-finance-manager-api",
   "version": "0.0.0",
-  "license": "MIT",
+  "description": "REST API of the Personal Finance Manager: JWT authentication with e-mail verification, transactions and Swagger docs.",
   "private": true,
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "start": "cross-env NODE_ENV=production node ./src/server.js",
