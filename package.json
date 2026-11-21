@@ -15,6 +15,7 @@
     "lint:fix": "eslint --fix",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:emulator": "pnpm dlx firebase-tools@15.37.0 emulators:exec --only firestore --project demo-finance-tracker \"vitest run --config vitest.emulator.config.ts\"",
     "openapi": "node scripts/write-openapi.ts",
     "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test",
     "health": "node scripts/health-check.ts",
