@@ -1,3 +1,4 @@
+import type { Contribution, StoredGoal } from "../schemas/goals.ts";
 import type { Budget, Category, StoredAccount, Transaction } from "../schemas/ledger.ts";
 import type { Profile } from "../schemas/profile.ts";
 
@@ -78,6 +79,8 @@ export interface Store {
   accounts: UserCollection<StoredAccount>;
   categories: UserCollection<Category>;
   budgets: UserCollection<Budget>;
+  goals: UserCollection<StoredGoal>;
+  contributions: UserCollection<Contribution>;
   transactions: TransactionStore;
   marks: MarkStore;
   legacy: LegacyReader;
