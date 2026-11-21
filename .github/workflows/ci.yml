@@ -1,4 +1,5 @@
-# CI: the quality gate of the API. Formatting, lint, types, unit tests, the OpenAPI contract and a dependency audit.
+# CI: the quality gate of the API. Formatting, lint, types, unit tests, the OpenAPI contract and a dependency audit,
+# then the same routes against the Firestore emulator (Java 21, the emulator of firebase-tools; no project, no key).
 #
 # Triggers: every pull request (not drafts, not documentation-only), manual run, and `workflow_call` from Build & Deploy
 # (push to develop and main). No `push` trigger: a branch with a pull request would be checked twice.
@@ -65,3 +66,36 @@ jobs:
 
       - name: Audit
         run: pnpm audit --prod --audit-level=high
+
+  emulator:
+    name: Firestore emulator
+    if: ${{ github.event.pull_request.draft != true }}
+    needs: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Cache the emulator
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/firebase/emulators
+          key: firebase-emulators-${{ runner.os }}-15.37.0
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Tests against the Firestore emulator
+        run: pnpm test:emulator

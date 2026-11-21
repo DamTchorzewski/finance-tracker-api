@@ -120,8 +120,8 @@ and deploys `main` to Cloud Run with a health check; `weekly.yml` checks the liv
 
 - **No build step:** Node.js runs the TypeScript files itself (type stripping), so `build` is not a script; Cloud Run
   starts `pnpm start`.
-- **No end-to-end tests:** an API without a browser; the routes are tested through the app in `pnpm test`. Tests
-  against the Firebase emulators come with the Firestore resources.
+- **No end-to-end tests:** an API without a browser; the routes are tested through the app in `pnpm test`
+  (memory store) and in `pnpm test:emulator` (the Firestore emulator, run by CI; it needs Java 21).
 - **No README images yet:** they wait for the version 2 brand (the logo is being designed).
 
 ## Documentation
