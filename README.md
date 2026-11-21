@@ -1,140 +1,113 @@
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/images/banner-dark.png">
-    <img src="docs/images/banner-light.png" alt="Personal Finance Manager API: Firebase authentication, transactions in Firestore and Swagger docs" width="100%">
-  </picture>
-</p>
-
-<p align="center">
-  <img src="docs/images/showcase.jpg" alt="The Swagger documentation of the API, served at /api-docs" width="100%">
-</p>
-
 ## About
 
-**Personal Finance Manager API** is the REST API behind the
-[Personal Finance Manager](https://github.com/DamTchorzewski/personal-finance-manager) web app. It checks the Firebase
-sign-in of each request and stores each user's income and expense transactions in Firestore. It runs on Google Cloud Run.
+**finance-tracker-api** is the REST API of the finance tracker, version 2 of the personal finance app: the signed-in
+user's profile now, and accounts, categories, transactions, budgets and currency rates as the work goes on. It runs on
+Google Cloud Run, signs users in with Firebase Authentication and keeps the data in Firestore. The web app is
+[`finance-tracker`](https://github.com/DamTchorzewski/finance-tracker); its plan is
+[docs/redesign-plan.md](https://github.com/DamTchorzewski/finance-tracker/blob/develop/docs/redesign-plan.md) there.
 
-- **Accounts.** Sign-up, sign-in (e-mail and password, or Google) and the verification e-mail are handled by Firebase
-  Authentication. The API verifies the Firebase ID token of every request, and can require a confirmed e-mail address.
-- **Transactions.** Create, list, update and delete the transactions of the signed-in user, newest first; each
-  transaction has a type (`+` or `-`), a category, a date, a comment and a sum. Each user has their own collection
-  (`users/{uid}/transactions`), so a user sees only their own.
-- **Validation.** Request bodies are validated with Joi (unknown fields are dropped) and answered with one error
-  format: `status`, `statusText` and `result.message`.
-- **No secret to keep.** On Google Cloud the API runs as a service account, so there is no key and no database password;
-  the deploy signs in to Google with Workload Identity Federation, so there is no key in GitHub either.
-- **Documented.** Swagger UI at `/api-docs`, from `src/docs/swagger.json` (OpenAPI 3).
+- **Contract first.** Every route is declared with a Zod schema (`@hono/zod-openapi`); the OpenAPI 3.1 document is
+  generated from them, served at `/api/openapi.json` with an interactive reference at `/api/docs`, and committed as
+  `openapi.json`, from which the web app generates its typed client.
+- **Signed in on every request.** The Firebase ID token in `Authorization: Bearer` is verified on each call; an
+  unconfirmed e-mail address is refused (`REQUIRE_VERIFIED_EMAIL`).
+- **One error shape.** `{ "error": { "code", "message", "issues"? } }`, with one issue per wrong field on a 400.
+- **Guard rails.** A per-user rate limit (`RATE_LIMIT_PER_MINUTE`), a 256 kB body limit, security headers,
+  `Cache-Control: private, no-store` on every answer, CORS off unless `CORS_ORIGIN` lists an origin.
+- **Profile.** `GET /api/me` and `PATCH /api/me/profile`: base currency, language, the day the budget month starts,
+  theme, accent hue, privacy mode and the order of the dashboard widgets.
+- **Its own data.** Version 2 writes under `apps/finance-tracker/users/{uid}` in Firestore, apart from version 1, so
+  the old app keeps working with the same sign-in accounts.
 
-| Method and path                         | Auth | What it does                               |
-| --------------------------------------- | :--: | ------------------------------------------ |
-| `GET /health`                           |      | health check (does not touch Firestore)    |
-| `GET /api/users/current`                | yes  | the signed-in user                         |
-| `GET /api/transactions`                 | yes  | the user's transactions                    |
-| `POST /api/transactions`                | yes  | add a transaction                          |
-| `PUT /api/transactions/:id`             | yes  | update a transaction                       |
-| `DELETE /api/transactions/:id`          | yes  | delete a transaction                       |
-| `GET /api/transactions/categories/:id`  | yes  | the category of a transaction              |
-
-> **Status:** there are no automated tests; the first request after a pause is slower (the service scales to zero).
+> **Status:** version 2 in progress (2026-11-21). Done: the foundations and the profile. Next: accounts, categories,
+> transactions, budgets, the NBP / ECB rates and the import from version 1. Version 1 of this API is
+> [`personal-finance-manager-api`](https://github.com/DamTchorzewski/personal-finance-manager-api), from which this
+> repository was copied with its history.
 
 ## Tech stack
 
-|          |                                                                                                   |
-| -------- | ------------------------------------------------------------------------------------------------- |
-| Stack    | Node.js 20 or newer (ES modules), Express 4                                                       |
-| Data     | Firestore, through the Firebase Admin SDK                                                         |
-| Auth     | Firebase Authentication (e-mail and password, Google); ID tokens verified with the Admin SDK     |
-| Services | Joi for validation                                                                                |
-| Docs     | Swagger UI (`swagger-ui-express`), OpenAPI 3                                                      |
-| Tests    | none                                                                                              |
-| Hosting  | Google Cloud Run, deployed from the source by GitHub Actions (`.github/workflows/deploy.yml`)     |
+|          |                                                                                    |
+| -------- | ---------------------------------------------------------------------------------- |
+| Stack    | Node.js 22.18+ running TypeScript directly (type stripping, no build step), Hono 4 |
+| Contract | Zod 4, `@hono/zod-openapi` (OpenAPI 3.1), Scalar API reference                     |
+| Auth     | Firebase Authentication, ID tokens verified with Firebase Admin                    |
+| Data     | Cloud Firestore (Firebase Admin)                                                   |
+| Tests    | Vitest against the app with a fake token verifier and an in-memory store           |
+| Hosting  | Google Cloud Run (europe-west1, min 0 / max 2 instances), built from the source    |
 
-The messages, code and commits are in English.
-
-## Screenshots
-
-<p align="center">
-  <img src="docs/images/docs.jpg" alt="The Users and Transactions groups of the Swagger documentation" width="100%">
-</p>
-
-The images are the Swagger UI served by the app itself (it needs no database). An API has no other screen, so there is
-no phone view.
+Code, comments, commits and the README are in English; `docs/` is in Polish (the owner reads it).
 
 ## Quick start
 
 ```bash
-git clone https://github.com/DamTchorzewski/personal-finance-manager-api.git
-cd personal-finance-manager-api
-npm install
-cp .env.example .env      # set FIREBASE_PROJECT_ID, see Configuration
-npm run dev               # http://localhost:8080/api-docs
+git clone https://github.com/DamTchorzewski/finance-tracker-api.git
+cd finance-tracker-api
+pnpm install
+cp .env.example .env   # FIREBASE_PROJECT_ID and GOOGLE_APPLICATION_CREDENTIALS, or the emulator hosts
+pnpm dev               # http://localhost:8080/api/health, docs at /api/docs
 ```
 
-Requirements: Node.js 20 or newer, npm, and either a Firebase project or the Firebase emulators (Authentication and
-Firestore). The deployment to Google Cloud is described in [docs/deployment.md](docs/deployment.md).
+Requirements: Node.js 22.18 or newer (`.nvmrc`: 22) and pnpm 11.18 (`packageManager`).
 
 ## Scripts
 
-| Command            | What it does                                                         |
-| ------------------ | -------------------------------------------------------------------- |
-| `npm start`        | production server (`NODE_ENV=production`)                            |
-| `npm run dev`      | development server with `nodemon`                                    |
-| `npm run lint`     | ESLint over the sources                                              |
-| `npm run lint:fix` | ESLint with automatic fixes                                          |
+| Command                        | Does                                                                      |
+| ------------------------------ | ------------------------------------------------------------------------- |
+| `pnpm dev`                     | the API with reload on change, reading `.env`                             |
+| `pnpm start`                   | the API as Cloud Run starts it                                            |
+| `pnpm check`                   | `format:check`, `lint`, `typecheck` and `test`: run before a pull request |
+| `pnpm test`                    | unit tests (Vitest)                                                       |
+| `pnpm openapi`                 | writes `openapi.json`; `--check` fails when it is out of date (CI)        |
+| `pnpm health`                  | read-only check of a live API (`API_URL`)                                 |
+| `pnpm format`, `pnpm lint:fix` | fix formatting and lint                                                   |
 
 ## Configuration
 
-The file is `.env.example` (names only, copy it to `.env`). None of the variables is a secret.
+All variables, names only, are in [`.env.example`](.env.example); the defaults are in `src/env.ts`. None is a secret.
 
-| Variable                                          | What it is                                                                  |
-| ------------------------------------------------- | --------------------------------------------------------------------------- |
-| `FIREBASE_PROJECT_ID`                             | the Firebase / Google Cloud project (required)                              |
-| `PORT`                                            | port the API listens on (optional, 8080; Cloud Run sets it)                 |
-| `CORS_ORIGIN`                                     | web origins allowed to call the API, comma separated (optional, any origin) |
-| `REQUIRE_VERIFIED_EMAIL`                          | `false` lets users in before they confirm their e-mail (optional)           |
-| `GOOGLE_APPLICATION_CREDENTIALS`                  | a service account key file, only for local work against the real project   |
-| `FIREBASE_AUTH_EMULATOR_HOST`, `FIRESTORE_EMULATOR_HOST` | the Firebase emulators, only for local work                          |
+| Variable                 | What it does                                                          |
+| ------------------------ | --------------------------------------------------------------------- |
+| `FIREBASE_PROJECT_ID`    | the Firebase / Google Cloud project; set on Cloud Run by the deploy   |
+| `CORS_ORIGIN`            | origins allowed from another origin (local web app); empty = CORS off |
+| `REQUIRE_VERIFIED_EMAIL` | `false` lets in users with an unconfirmed e-mail address              |
+| `RATE_LIMIT_PER_MINUTE`  | requests per user and minute, default 120                             |
 
 ## Structure
 
 ```
-src/server.js          ★ starts the app on PORT
-src/app.js             Express app: Swagger UI, CORS, /health, the routers, the error handlers
-src/routes/            users.js and transactions.js: the routes and their middleware
-src/controllers/       request handling: validation, status codes, the response format
-src/services/          the Firestore queries (users/{uid}/transactions)
-src/middlewares/       auth.js: the Firebase ID token check
-src/config/            firebase.js: the Firebase Admin app, Authentication and Firestore
-src/utils/             validation (Joi), error helpers
-src/docs/              swagger.json: the OpenAPI description
-.github/workflows/     deploy.yml: deploy to Cloud Run from main
-docs/                  deployment steps, repository description; docs/images/ holds the README images (generated)
+src/
+  server.ts            starts the API with Firebase Admin (Cloud Run, local)
+  app.ts             ★ the app: middleware, routes, the OpenAPI document
+  env.ts               settings read from the environment
+  lib/                 errors, sign-in middleware, rate limit
+  routes/            ★ one file per resource (system, me)
+  schemas/           ★ Zod schemas, the contract
+  store/               storage interface; Firestore and in-memory implementations
+  test/                test helpers (fake token verifier)
+scripts/               write-openapi.ts, health-check.ts
+openapi.json           the generated contract (committed)
+docs/                  deployment and repository settings
 ```
 
 ## Branches and workflows
 
-Shared standards from `reops/standards`: `main` ≤ `develop` ≤ a working branch `<type>/<topic>`, Conventional
-Commits in English. `deploy.yml` deploys every push to `main` (not documentation-only ones). Details:
-`reops/standards/git.md` and `reops/standards/workflows.md`.
+Shared standards from `reops/standards`: `main` ≤ `develop` ≤ a working branch `<type>/<topic>`, Conventional Commits in
+English, `git.md` and `workflows.md`. `ci.yml` checks every pull request; `deploy.yml` runs CI on `develop` and `main`
+and deploys `main` to Cloud Run with a health check; `weekly.yml` checks the live API every Monday.
 
 **Departures from the standards (and why):**
 
-- **No CI checks, no tests, no hooks:** a small back end; the checks are `npm run lint` and the Swagger UI.
-- **Google actions pinned by version tag, not by commit:** `google-github-actions/auth` and `deploy-cloudrun` are
-  referenced as `@v2`.
-- **npm, not pnpm:** the project predates the standards.
-- **README images** are made by `tools/readme-images` (profile `personal-finance-manager-api`) from the Swagger UI the
-  app serves locally; the logo is a wordmark, and there is no "Open site" button and no phone strip.
-- **No DamReboot footer:** not a company product.
+- **No build step:** Node.js runs the TypeScript files itself (type stripping), so `build` is not a script; Cloud Run
+  starts `pnpm start`.
+- **No end-to-end tests:** an API without a browser; the routes are tested through the app in `pnpm test`. Tests
+  against the Firebase emulators come with the Firestore resources.
+- **No README images yet:** they wait for the version 2 brand (the logo is being designed).
 
 ## Documentation
 
 | File                                     | What it covers                                                          |
 | ---------------------------------------- | ----------------------------------------------------------------------- |
-| [docs/deployment.md](docs/deployment.md) | Google Cloud, Firebase and GitHub setup, step by step, and the first deploy |
+| [docs/deployment.md](docs/deployment.md) | Google Cloud, Firebase and GitHub setup for version 2, the first deploy |
 | [docs/repository.md](docs/repository.md) | GitHub description and topics, and the command that sets them           |
-
-The README images (`docs/images/`) are regenerated with `tools/readme-images`, profile `personal-finance-manager-api`; the working shots go to `.scratch/`.
 
 Author: [Damian Tchorzewski](https://github.com/DamTchorzewski). Licensed under the [MIT License](LICENSE).
