@@ -1,0 +1,4 @@
+# No dependency of the API needs an install script: firebase-admin's helpers only print or copy defaults.
+allowBuilds:
+  "@firebase/util": false
+  protobufjs: false

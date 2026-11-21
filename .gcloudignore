@@ -1,0 +1,6 @@
+# What Cloud Run does not upload when it builds from the source
+.git/
+node_modules/
+.scratch/
+coverage/
+.env
