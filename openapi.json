@@ -37,6 +37,242 @@
           "version"
         ]
       },
+      "MidTable": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string",
+            "enum": [
+              "nbp-a",
+              "ecb"
+            ],
+            "description": "nbp-a = NBP table A; ecb = the fallback when NBP fails"
+          },
+          "date": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-11-21",
+            "description": "The day of the table that answered"
+          },
+          "requested": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-11-21",
+            "description": "The day that was asked for"
+          },
+          "fallback": {
+            "type": "boolean"
+          },
+          "rates": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number"
+            },
+            "description": "PLN per 1 unit of each currency",
+            "example": {
+              "EUR": 4.2512,
+              "USD": 3.6713
+            }
+          }
+        },
+        "required": [
+          "source",
+          "date",
+          "requested",
+          "fallback",
+          "rates"
+        ]
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "enum": [
+                  "bad_request",
+                  "validation",
+                  "unauthorized",
+                  "forbidden",
+                  "not_found",
+                  "conflict",
+                  "payload_too_large",
+                  "rate_limited",
+                  "upstream_unavailable",
+                  "internal"
+                ]
+              },
+              "message": {
+                "type": "string"
+              },
+              "issues": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "path": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "path",
+                    "message"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "code",
+              "message"
+            ]
+          }
+        },
+        "required": [
+          "error"
+        ]
+      },
+      "CashTable": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string",
+            "enum": [
+              "nbp-c"
+            ]
+          },
+          "date": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-11-21"
+          },
+          "tradingDate": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-11-21"
+          },
+          "rates": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "bid": {
+                  "type": "number"
+                },
+                "ask": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "bid",
+                "ask"
+              ]
+            }
+          }
+        },
+        "required": [
+          "source",
+          "date",
+          "tradingDate",
+          "rates"
+        ]
+      },
+      "RateHistory": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^[A-Z]{3}$",
+            "example": "PLN"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "nbp-a",
+              "ecb"
+            ]
+          },
+          "points": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": {
+                  "type": "string",
+                  "format": "date",
+                  "example": "2026-11-21"
+                },
+                "mid": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "date",
+                "mid"
+              ]
+            }
+          }
+        },
+        "required": [
+          "code",
+          "source",
+          "points"
+        ]
+      },
+      "Conversion": {
+        "type": "object",
+        "properties": {
+          "amountMinor": {
+            "type": "integer"
+          },
+          "from": {
+            "type": "string",
+            "pattern": "^[A-Z]{3}$",
+            "example": "PLN"
+          },
+          "to": {
+            "type": "string",
+            "pattern": "^[A-Z]{3}$",
+            "example": "PLN"
+          },
+          "resultMinor": {
+            "type": "integer"
+          },
+          "rate": {
+            "type": "number",
+            "description": "Units of `to` for one unit of `from`"
+          },
+          "date": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-11-21"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "nbp-a",
+              "ecb"
+            ]
+          },
+          "fallback": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "amountMinor",
+          "from",
+          "to",
+          "resultMinor",
+          "rate",
+          "date",
+          "source",
+          "fallback"
+        ]
+      },
       "Me": {
         "type": "object",
         "properties": {
@@ -150,59 +386,6 @@
           "widgets"
         ]
       },
-      "Error": {
-        "type": "object",
-        "properties": {
-          "error": {
-            "type": "object",
-            "properties": {
-              "code": {
-                "type": "string",
-                "enum": [
-                  "bad_request",
-                  "validation",
-                  "unauthorized",
-                  "forbidden",
-                  "not_found",
-                  "conflict",
-                  "payload_too_large",
-                  "rate_limited",
-                  "upstream_unavailable",
-                  "internal"
-                ]
-              },
-              "message": {
-                "type": "string"
-              },
-              "issues": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "path": {
-                      "type": "string"
-                    },
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "path",
-                    "message"
-                  ]
-                }
-              }
-            },
-            "required": [
-              "code",
-              "message"
-            ]
-          }
-        },
-        "required": [
-          "error"
-        ]
-      },
       "ProfilePatch": {
         "type": "object",
         "properties": {
@@ -283,6 +466,295 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Health"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rates": {
+      "get": {
+        "tags": [
+          "Rates"
+        ],
+        "summary": "Mid rates of a day (NBP table A; ECB when NBP fails). A day without a table gets the last one before it",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "example": "2026-11-21"
+            },
+            "required": false,
+            "name": "date",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The table",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MidTable"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "rate_limited",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "upstream_unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rates/cash": {
+      "get": {
+        "tags": [
+          "Rates"
+        ],
+        "summary": "Bank buy and sell rates (NBP table C), the latest",
+        "responses": {
+          "200": {
+            "description": "The table",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CashTable"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "rate_limited",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "upstream_unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rates/history": {
+      "get": {
+        "tags": [
+          "Rates"
+        ],
+        "summary": "The mid rate of one currency on every day with a table, at most 366 days",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Z]{3}$",
+              "example": "PLN"
+            },
+            "required": true,
+            "name": "code",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "example": "2026-11-21"
+            },
+            "required": true,
+            "name": "from",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "example": "2026-11-21"
+            },
+            "required": true,
+            "name": "to",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The rates",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateHistory"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "rate_limited",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "upstream_unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rates/convert": {
+      "get": {
+        "tags": [
+          "Rates"
+        ],
+        "summary": "Convert an amount in minor units at the mid rates of a day",
+        "parameters": [
+          {
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": -1000000000000000,
+              "maximum": 1000000000000000
+            },
+            "required": false,
+            "name": "amountMinor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Z]{3}$",
+              "example": "PLN"
+            },
+            "required": true,
+            "name": "from",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Z]{3}$",
+              "example": "PLN"
+            },
+            "required": true,
+            "name": "to",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "example": "2026-11-21"
+            },
+            "required": false,
+            "name": "date",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Conversion"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "rate_limited",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "upstream_unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
                 }
               }
             }

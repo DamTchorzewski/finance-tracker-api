@@ -16,11 +16,18 @@ Google Cloud Run, signs users in with Firebase Authentication and keeps the data
   `Cache-Control: private, no-store` on every answer, CORS off unless `CORS_ORIGIN` lists an origin.
 - **Profile.** `GET /api/me` and `PATCH /api/me/profile`: base currency, language, the day the budget month starts,
   theme, accent hue, privacy mode and the order of the dashboard widgets.
+- **Currency rates.** `GET /api/rates` (mid rates of a day, NBP table A), `/api/rates/cash` (bank buy and sell,
+  table C), `/api/rates/history` (one currency, up to 366 days) and `/api/rates/convert`. NBP first, retried once
+  (it answers a passing 500 now and then), then the ECB rates through Frankfurter; a weekend or a holiday gets the
+  last table before it. Past days are kept in Firestore for good, today for 30 minutes; the answers are public and
+  cached by Firebase Hosting's CDN, so the demo uses them without an account.
+- **Money in minor units.** `src/lib/money.ts` rounds on the decimal digits (1.005 PLN is 101 grosze) and converts
+  through the PLN mid rates; the minor digits of each currency come from Node's ICU data.
 - **Its own data.** Version 2 writes under `apps/finance-tracker/users/{uid}` in Firestore, apart from version 1, so
   the old app keeps working with the same sign-in accounts.
 
-> **Status:** version 2 in progress (2026-11-21). Done: the foundations and the profile. Next: accounts, categories,
-> transactions, budgets, the NBP / ECB rates and the import from version 1. Version 1 of this API is
+> **Status:** version 2 in progress (2026-11-21). Done: the foundations, the profile and the currency rates. Next:
+> accounts, categories, transactions, budgets and the import from version 1. Version 1 of this API is
 > [`personal-finance-manager-api`](https://github.com/DamTchorzewski/personal-finance-manager-api), from which this
 > repository was copied with its history.
 
@@ -79,8 +86,9 @@ src/
   server.ts            starts the API with Firebase Admin (Cloud Run, local)
   app.ts             ★ the app: middleware, routes, the OpenAPI document
   env.ts               settings read from the environment
-  lib/                 errors, sign-in middleware, rate limit
-  routes/            ★ one file per resource (system, me)
+  lib/                 errors, sign-in middleware, rate limit, money and dates
+  rates/               NBP and ECB clients, the rates service and its Firestore cache
+  routes/            ★ one file per resource (system, me, rates)
   schemas/           ★ Zod schemas, the contract
   store/               storage interface; Firestore and in-memory implementations
   test/                test helpers (fake token verifier)

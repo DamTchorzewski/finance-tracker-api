@@ -6,8 +6,10 @@ import { secureHeaders } from "hono/secure-headers";
 import type { Env } from "./env.ts";
 import { requireUser, type AppEnv, type TokenVerifier } from "./lib/auth.ts";
 import { handleError, sendError } from "./lib/errors.ts";
-import { rateLimit } from "./lib/rate-limit.ts";
+import { byAddress, rateLimit } from "./lib/rate-limit.ts";
+import type { RatesService } from "./rates/service.ts";
 import { meRoutes } from "./routes/me.ts";
+import { ratesRoutes } from "./routes/rates.ts";
 import { systemRoutes } from "./routes/system.ts";
 import type { Store } from "./store/types.ts";
 
@@ -15,6 +17,7 @@ export interface Deps {
   env: Env;
   verifier: TokenVerifier;
   store: Store;
+  rates: RatesService;
 }
 
 export const OPENAPI_INFO = {
@@ -30,7 +33,7 @@ export const OPENAPI_INFO = {
 };
 
 /** The API under /api: what Firebase Hosting rewrites to Cloud Run, and what runs locally. */
-export function createApi({ env, verifier, store }: Deps) {
+export function createApi({ env, verifier, store, rates }: Deps) {
   const api = new OpenAPIHono<AppEnv>();
 
   api.openAPIRegistry.registerComponent("securitySchemes", "bearerAuth", {
@@ -42,6 +45,11 @@ export function createApi({ env, verifier, store }: Deps) {
   api.route("/", systemRoutes(env.version));
   api.doc31("/openapi.json", OPENAPI_INFO);
   api.get("/docs", Scalar({ url: "/api/openapi.json", pageTitle: "Finance tracker API" }));
+
+  // Public, limited per address: the rates are public data and the demo uses them without an account.
+  api.use("/rates", rateLimit(env.rateLimitPerMinute, byAddress));
+  api.use("/rates/*", rateLimit(env.rateLimitPerMinute, byAddress));
+  api.route("/", ratesRoutes(rates));
 
   // Everything below needs a signed-in user.
   api.use("/me/*", requireUser(verifier, env), rateLimit(env.rateLimitPerMinute));

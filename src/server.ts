@@ -4,6 +4,8 @@ import { getAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
 import { createApp } from "./app.ts";
 import { readEnv } from "./env.ts";
+import { FirestoreRateCache } from "./rates/cache.ts";
+import { RatesService } from "./rates/service.ts";
 import { firestoreStore } from "./store/firestore.ts";
 
 // On Cloud Run the API runs as its service account, so there is no key. Locally: GOOGLE_APPLICATION_CREDENTIALS, or
@@ -17,6 +19,7 @@ db.settings({ ignoreUndefinedProperties: true });
 const app = createApp({
   env,
   store: firestoreStore(db),
+  rates: new RatesService({ fetcher: fetch, cache: new FirestoreRateCache(db) }),
   verifier: {
     async verify(token) {
       const decoded = await auth.verifyIdToken(token);
