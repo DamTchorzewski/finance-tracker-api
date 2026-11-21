@@ -25,6 +25,29 @@ export interface ResolvedTable extends MidTable {
   fallback: boolean;
 }
 
+/**
+ * The cache only saves calls to NBP: when it fails (Firestore down, no credentials on a laptop), the rates are still
+ * served from the source, and the failure is logged instead of answering 500.
+ */
+function tolerant(cache: RateCache): RateCache {
+  const guard =
+    <A extends unknown[], R>(name: string, fn: (...args: A) => Promise<R>, fallback: R) =>
+    async (...args: A): Promise<R> => {
+      try {
+        return await fn(...args);
+      } catch (err) {
+        console.warn(`rates cache ${name} failed: ${(err as Error).message}`);
+        return fallback;
+      }
+    };
+  return {
+    getTable: guard("getTable", cache.getTable.bind(cache), null),
+    putTables: guard("putTables", cache.putTables.bind(cache), undefined),
+    getResolved: guard("getResolved", cache.getResolved.bind(cache), null),
+    putResolved: guard("putResolved", cache.putResolved.bind(cache), undefined),
+  };
+}
+
 export interface History {
   source: MidTable["source"];
   points: { date: string; mid: number }[];
@@ -40,7 +63,7 @@ export class RatesService {
 
   constructor({ fetcher, cache, now = () => new Date() }: RatesDeps) {
     this.fetcher = fetcher;
-    this.cache = cache;
+    this.cache = tolerant(cache);
     this.now = now;
   }
 

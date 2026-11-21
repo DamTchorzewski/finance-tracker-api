@@ -113,6 +113,20 @@ describe("mid rates", () => {
     expect((await rates.midTable()).date).toBe("2026-11-20");
   });
 
+  it("serves the rates when the cache fails", async () => {
+    const broken = new MemoryRateCache();
+    const fail = () => Promise.reject(new Error("Could not load the default credentials"));
+    broken.putTables = fail;
+    broken.putResolved = fail;
+    broken.getResolved = fail;
+    const { rates } = service(
+      [["api.nbp.pl", { status: 200, body: [nbpA("2026-11-13")] }]],
+      broken,
+    );
+    expect((await rates.midTable("2026-11-15")).date).toBe("2026-11-13");
+    expect((await rates.history("EUR", "2026-11-01", "2026-11-20")).points).toHaveLength(1);
+  });
+
   it("does not keep today's resolution for good: NBP may still publish", async () => {
     const { rates, cache } = service([["api.nbp.pl", { status: 200, body: [nbpA("2026-11-20")] }]]);
     await rates.midTable();
