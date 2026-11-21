@@ -9,6 +9,7 @@ import { handleError, sendError } from "./lib/errors.ts";
 import { byAddress, rateLimit } from "./lib/rate-limit.ts";
 import type { RatesService } from "./rates/service.ts";
 import { Ledger } from "./ledger/service.ts";
+import { goalsRoutes } from "./routes/goals.ts";
 import { ledgerRoutes } from "./routes/ledger.ts";
 import { meRoutes } from "./routes/me.ts";
 import { ratesRoutes } from "./routes/rates.ts";
@@ -35,7 +36,15 @@ export const OPENAPI_INFO = {
 };
 
 /** Every route under these paths needs a signed-in user. */
-const PRIVATE_PATHS = ["/me", "/accounts", "/categories", "/budgets", "/transactions", "/import"];
+const PRIVATE_PATHS = [
+  "/me",
+  "/accounts",
+  "/categories",
+  "/budgets",
+  "/goals",
+  "/transactions",
+  "/import",
+];
 
 /** The API under /api: what Firebase Hosting rewrites to Cloud Run, and what runs locally. */
 export function createApi({ env, verifier, store, rates }: Deps) {
@@ -62,6 +71,7 @@ export function createApi({ env, verifier, store, rates }: Deps) {
   const ledger = new Ledger(store, rates);
   api.route("/", meRoutes(store));
   api.route("/", ledgerRoutes(store, ledger));
+  api.route("/", goalsRoutes(store, ledger));
 
   return api;
 }

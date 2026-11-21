@@ -1,4 +1,5 @@
 import { FieldValue, type Firestore } from "firebase-admin/firestore";
+import type { Contribution, StoredGoal } from "../schemas/goals.ts";
 import type { Budget, Category, StoredAccount, Transaction } from "../schemas/ledger.ts";
 import type { Profile } from "../schemas/profile.ts";
 import {
@@ -231,6 +232,8 @@ export const firestoreStore = (db: Firestore): Store => {
     accounts,
     categories: new FirestoreCollection<Category>(db, "categories"),
     budgets: new FirestoreCollection<Budget>(db, "budgets"),
+    goals: new FirestoreCollection<StoredGoal>(db, "goals"),
+    contributions: new FirestoreCollection<Contribution>(db, "goal-contributions"),
     transactions: new FirestoreTransactions(db, accounts),
     marks: new FirestoreMarks(db),
     legacy: new FirestoreLegacy(db),

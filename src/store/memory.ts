@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import type { Contribution, StoredGoal } from "../schemas/goals.ts";
 import type { Budget, Category, StoredAccount, Transaction } from "../schemas/ledger.ts";
 import type { Profile } from "../schemas/profile.ts";
 import {
@@ -158,6 +159,8 @@ export const memoryStore = (): Store & { legacy: MemoryLegacy } => {
     accounts,
     categories: new MemoryCollection<Category>(),
     budgets: new MemoryCollection<Budget>(),
+    goals: new MemoryCollection<StoredGoal>(),
+    contributions: new MemoryCollection<Contribution>(),
     transactions: new MemoryTransactions(accounts),
     marks: new MemoryMarks(),
     legacy: new MemoryLegacy(),

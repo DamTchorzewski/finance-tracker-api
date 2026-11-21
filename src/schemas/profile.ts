@@ -6,6 +6,7 @@ export const WIDGETS = [
   "cashflow",
   "spending",
   "budgets",
+  "goals",
   "recent",
   "rates",
   "upcoming",
