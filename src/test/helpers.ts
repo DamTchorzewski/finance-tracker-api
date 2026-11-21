@@ -1,6 +1,8 @@
 import { createApp } from "../app.ts";
 import { readEnv, type Env } from "../env.ts";
 import type { AuthUser, TokenVerifier } from "../lib/auth.ts";
+import { MemoryRateCache } from "../rates/cache.ts";
+import { RatesService } from "../rates/service.ts";
 import { memoryStore } from "../store/memory.ts";
 import type { Store } from "../store/types.ts";
 
@@ -21,9 +23,16 @@ export const fakeVerifier: TokenVerifier = {
   },
 };
 
-export function testApp(overrides: Partial<Env> = {}, store: Store = memoryStore()) {
+export function testApp(
+  overrides: Partial<Env> = {},
+  store: Store = memoryStore(),
+  rates: RatesService = new RatesService({
+    fetcher: () => Promise.reject(new Error("no network in tests")),
+    cache: new MemoryRateCache(),
+  }),
+) {
   const env = { ...readEnv({}), ...overrides };
-  const app = createApp({ env, store, verifier: fakeVerifier });
+  const app = createApp({ env, store, rates, verifier: fakeVerifier });
 
   const request = (
     path: string,
