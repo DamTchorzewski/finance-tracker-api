@@ -1,0 +1,63 @@
+# Weekly: a read-only check of the live API once a week, without CI, building or deploying anything.
+#
+# Triggers: every Monday at 06:00 UTC (07:00 in winter, 08:00 in summer in Warsaw; cron is UTC) and a manual run.
+# A schedule runs only on the default branch, which must be main.
+# Job: health → `scripts/health-check.ts` against API_URL (/api/health, the contract, 401 without a token).
+# A failure opens (or comments on) an issue labelled `weekly-failure`.
+# Repository variable (Settings → Secrets and variables → Actions → Variables):
+#   API_URL   the origin of the live API (the Cloud Run URL, or the web app's address that rewrites /api)
+# Standard: reops/standards/workflows.md (global, outside this repo)
+
+name: Weekly
+
+on:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+concurrency:
+  group: weekly
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  health:
+    name: Live API
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+
+      - name: Health check
+        env:
+          API_URL: ${{ vars.API_URL }}
+        run: node scripts/health-check.ts
+
+  report-failure:
+    name: Report failure
+    needs: [health]
+    if: failure() && github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      issues: write
+    steps:
+      - name: Open or update the issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          gh label create weekly-failure --color B60205 --description "Weekly checks failed" 2>/dev/null || true
+          issue=$(gh issue list --label weekly-failure --state open --json number --jq '.[0].number')
+          if [ -n "$issue" ]; then
+            gh issue comment "$issue" --body "Failed again: $RUN_URL"
+          else
+            gh issue create --label weekly-failure --title "Weekly checks failed" --body "The weekly health check failed: $RUN_URL"
+          fi
