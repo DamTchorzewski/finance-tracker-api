@@ -8,6 +8,8 @@ import { requireUser, type AppEnv, type TokenVerifier } from "./lib/auth.ts";
 import { handleError, sendError } from "./lib/errors.ts";
 import { byAddress, rateLimit } from "./lib/rate-limit.ts";
 import type { RatesService } from "./rates/service.ts";
+import { Ledger } from "./ledger/service.ts";
+import { ledgerRoutes } from "./routes/ledger.ts";
 import { meRoutes } from "./routes/me.ts";
 import { ratesRoutes } from "./routes/rates.ts";
 import { systemRoutes } from "./routes/system.ts";
@@ -32,6 +34,9 @@ export const OPENAPI_INFO = {
   servers: [{ url: "/api" }],
 };
 
+/** Every route under these paths needs a signed-in user. */
+const PRIVATE_PATHS = ["/me", "/accounts", "/categories", "/budgets", "/transactions", "/import"];
+
 /** The API under /api: what Firebase Hosting rewrites to Cloud Run, and what runs locally. */
 export function createApi({ env, verifier, store, rates }: Deps) {
   const api = new OpenAPIHono<AppEnv>();
@@ -47,14 +52,16 @@ export function createApi({ env, verifier, store, rates }: Deps) {
   api.get("/docs", Scalar({ url: "/api/openapi.json", pageTitle: "Finance tracker API" }));
 
   // Public, limited per address: the rates are public data and the demo uses them without an account.
-  api.use("/rates", rateLimit(env.rateLimitPerMinute, byAddress));
   api.use("/rates/*", rateLimit(env.rateLimitPerMinute, byAddress));
   api.route("/", ratesRoutes(rates));
 
   // Everything below needs a signed-in user.
-  api.use("/me/*", requireUser(verifier, env), rateLimit(env.rateLimitPerMinute));
-  api.use("/me", requireUser(verifier, env), rateLimit(env.rateLimitPerMinute));
+  const signedIn = [requireUser(verifier, env), rateLimit(env.rateLimitPerMinute)] as const;
+  // "/me/*" also matches "/me" itself, so one pattern per path (a second one would count each request twice)
+  for (const path of PRIVATE_PATHS) api.use(`${path}/*`, ...signedIn);
+  const ledger = new Ledger(store, rates);
   api.route("/", meRoutes(store));
+  api.route("/", ledgerRoutes(store, ledger));
 
   return api;
 }
