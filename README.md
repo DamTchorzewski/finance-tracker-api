@@ -16,6 +16,17 @@ Google Cloud Run, signs users in with Firebase Authentication and keeps the data
   `Cache-Control: private, no-store` on every answer, CORS off unless `CORS_ORIGIN` lists an origin.
 - **Profile.** `GET /api/me` and `PATCH /api/me/profile`: base currency, language, the day the budget month starts,
   theme, accent hue, privacy mode and the order of the dashboard widgets.
+- **Accounts with exact balances.** Cash, bank, savings, card and foreign-currency accounts; each write of a
+  transaction moves the `flowMinor` of the accounts it touches in the same Firestore transaction, so a balance is
+  always the opening balance plus the transactions.
+- **Transactions.** Expenses, income and transfers (also between currencies: the received amount is converted at the
+  rate of the day unless it is given); a note, payee and tags; listed by date range (up to 400 days) with filters and
+  text search. The value in PLN is frozen at the rate of the transaction's day, so old reports never change.
+- **Categories and budgets.** A new user gets 17 categories in their language (each with a `key` the app can
+  translate); own ones with a Lucide icon and a palette colour; one monthly budget per expense category, with alert
+  thresholds and rollover. Anything in use is archived, not deleted.
+- **Import from version 1.** `POST /api/import/v1` copies the old `users/{uid}/transactions` once into a new PLN
+  account, mapping the old English categories; version 1 is only read.
 - **Currency rates.** `GET /api/rates` (mid rates of a day, NBP table A), `/api/rates/cash` (bank buy and sell,
   table C), `/api/rates/history` (one currency, up to 366 days) and `/api/rates/convert`. NBP first, retried once
   (it answers a passing 500 now and then), then the ECB rates through Frankfurter; a weekend or a holiday gets the
@@ -26,8 +37,9 @@ Google Cloud Run, signs users in with Firebase Authentication and keeps the data
 - **Its own data.** Version 2 writes under `apps/finance-tracker/users/{uid}` in Firestore, apart from version 1, so
   the old app keeps working with the same sign-in accounts.
 
-> **Status:** version 2 in progress (2026-11-21). Done: the foundations, the profile and the currency rates. Next:
-> accounts, categories, transactions, budgets and the import from version 1. Version 1 of this API is
+> **Status:** version 2 in progress (2026-11-21). Done: the foundations, the profile, the currency rates, accounts,
+> categories, transactions, budgets and the import from version 1. Next: recurring transactions, goals and rules
+> (release 2 of the plan). Version 1 of this API is
 > [`personal-finance-manager-api`](https://github.com/DamTchorzewski/personal-finance-manager-api), from which this
 > repository was copied with its history.
 
@@ -87,8 +99,9 @@ src/
   app.ts             ★ the app: middleware, routes, the OpenAPI document
   env.ts               settings read from the environment
   lib/                 errors, sign-in middleware, rate limit, money and dates
+  ledger/              the rules across documents: seeding, checks, the frozen PLN value, the import
   rates/               NBP and ECB clients, the rates service and its Firestore cache
-  routes/            ★ one file per resource (system, me, rates)
+  routes/            ★ one file per resource (system, me, rates, ledger)
   schemas/           ★ Zod schemas, the contract
   store/               storage interface; Firestore and in-memory implementations
   test/                test helpers (fake token verifier)
