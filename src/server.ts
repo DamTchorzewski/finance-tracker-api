@@ -33,6 +33,12 @@ const app = createApp({
   },
 });
 
+// A library promise that fails outside a request (the Firestore client retries in the background) is logged, not
+// allowed to stop the server for every user. A real bug still shows in the logs of Cloud Run.
+process.on("unhandledRejection", (reason) => {
+  console.error("Unhandled rejection:", reason instanceof Error ? reason.message : reason);
+});
+
 serve({ fetch: app.fetch, port: env.port }, ({ port }) => {
   console.log(`Finance tracker API listening on port ${port}`);
 });
