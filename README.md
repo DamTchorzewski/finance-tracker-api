@@ -1,3 +1,14 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/banner-dark.png">
+    <img src="docs/images/banner-light.png" alt="Piggo API: the REST API of a personal finance app" width="100%">
+  </picture>
+</p>
+
+<p align="center">
+  <img src="docs/images/showcase.jpg" alt="The API reference at /api/docs and a terminal with two answers of the local API" width="100%">
+</p>
+
 ## About
 
 **finance-tracker-api** is the REST API of the finance tracker, version 2 of the personal finance app: the signed-in
@@ -55,6 +66,15 @@ Google Cloud Run, signs users in with Firebase Authentication and keeps the data
 | Hosting  | Google Cloud Run (europe-west1, min 0 / max 2 instances), built from the source    |
 
 Code, comments, commits and the README are in English; `docs/` is in Polish (the owner reads it).
+
+## Screenshots
+
+<p align="center">
+  <img src="docs/images/desktop-themes.jpg" alt="The API reference in the light mode and the transactions routes in the dark mode" width="100%">
+</p>
+
+The reference is the Scalar page the API serves at `/api/docs`; the terminal shows real answers of a local server (a
+public currency conversion and the error for a call without a token). No database and no account were used.
 
 ## Quick start
 
@@ -122,7 +142,9 @@ and deploys `main` to Cloud Run with a health check; `weekly.yml` checks the liv
   starts `pnpm start`.
 - **No end-to-end tests:** an API without a browser; the routes are tested through the app in `pnpm test`
   (memory store) and in `pnpm test:emulator` (the Firestore emulator, run by CI; it needs Java 21).
-- **No README images yet:** they wait for the version 2 brand (the logo is being designed).
+- **No phone strip and no "Open site" button:** an API has no page for a phone, and it is not deployed yet; the images
+  show its own reference page and a terminal.
+- **No DamReboot footer:** version 1 was the back end of a team project, so the author line stays as it was there.
 
 ## Documentation
 
@@ -130,5 +152,8 @@ and deploys `main` to Cloud Run with a health check; `weekly.yml` checks the liv
 | ---------------------------------------- | ----------------------------------------------------------------------- |
 | [docs/deployment.md](docs/deployment.md) | Google Cloud, Firebase and GitHub setup for version 2, the first deploy |
 | [docs/repository.md](docs/repository.md) | GitHub description and topics, and the command that sets them           |
+
+The README images (`docs/images/`) are made with `tools/readme-images`, profile `finance-tracker-api`, from a local
+server; the working shots go to `.scratch/`.
 
 Author: [Damian Tchorzewski](https://github.com/DamTchorzewski). Licensed under the [MIT License](LICENSE).
