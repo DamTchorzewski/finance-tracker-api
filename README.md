@@ -144,7 +144,6 @@ and deploys `main` to Cloud Run with a health check; `weekly.yml` checks the liv
   (memory store) and in `pnpm test:emulator` (the Firestore emulator, run by CI; it needs Java 21).
 - **No phone strip and no "Open site" button:** an API has no page for a phone, and it is not deployed yet; the images
   show its own reference page and a terminal.
-- **No DamReboot footer:** version 1 was the back end of a team project, so the author line stays as it was there.
 
 ## Documentation
 
@@ -156,4 +155,19 @@ and deploys `main` to Cloud Run with a health check; `weekly.yml` checks the liv
 The README images (`docs/images/`) are made with `tools/readme-images`, profile `finance-tracker-api`, from a local
 server; the working shots go to `.scratch/`.
 
-Author: [Damian Tchorzewski](https://github.com/DamTchorzewski). Licensed under the [MIT License](LICENSE).
+## Versions
+
+| Version             | Repository                                                                                       | Made by                                                 |
+| ------------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------- |
+| 1                   | [`personal-finance-manager-api`](https://github.com/DamTchorzewski/personal-finance-manager-api) | [Damian Tchorzewski](https://github.com/DamTchorzewski) |
+| 2 (this repository) | `finance-tracker-api`                                                                            | [Damian Tchorzewski](https://github.com/DamTchorzewski) |
+
+Licensed under the [MIT License](LICENSE).
+
+---
+
+<p align="center"><a href="https://damreboot.pl"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/images/damreboot/company-dark.svg"><img src="docs/images/damreboot/company-light.svg" alt="damreboot.pl: company website" height="36"></picture></a><a href="https://www.linkedin.com/in/damian-tchorzewski-3b2388275/"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/images/damreboot/linkedin-dark.svg"><img src="docs/images/damreboot/linkedin-light.svg" alt="LinkedIn: let's connect" height="36"></picture></a><a href="mailto:damianchabracki@gmail.com"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/images/damreboot/email-dark.svg"><img src="docs/images/damreboot/email-light.svg" alt="E-mail: write to me" height="36"></picture></a></p>
+
+<p align="center">
+  <picture><source media="(prefers-color-scheme: dark)" srcset="docs/images/damreboot/engineered-dark.svg"><img src="docs/images/damreboot/engineered-light.svg" alt="" height="33" align="middle"></picture> Engineered by <b>Damian Chabracki</b> (DamReboot IT)
+</p>
