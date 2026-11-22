@@ -36,7 +36,7 @@ export const DEFAULT_PROFILE: Profile = {
   locale: "pl",
   monthStartDay: 1,
   theme: "system",
-  accentHue: 160,
+  accentHue: 328, // the Piggo brand hue (finance-tracker docs/brand.md)
   privacyMode: false,
   widgets: ["balance", "cashflow", "spending", "budgets", "recent", "rates"],
 };
