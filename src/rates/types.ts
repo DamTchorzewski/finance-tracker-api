@@ -14,8 +14,6 @@ export interface CashTable {
   rates: Record<string, { bid: number; ask: number }>;
 }
 
-export type RateSource = MidTable["source"] | CashTable["source"];
-
 /** Where the API keeps tables it has fetched. Past days never change, so they are kept for good. */
 export interface RateCache {
   getTable(source: "nbp-a" | "ecb", date: string): Promise<MidTable | null>;

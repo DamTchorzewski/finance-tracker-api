@@ -1,6 +1,5 @@
 import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
 import type { AppEnv } from "../lib/auth.ts";
-import { errorResponses } from "../lib/errors.ts";
 import {
   DEFAULT_PROFILE,
   MeSchema,
@@ -9,8 +8,7 @@ import {
 } from "../schemas/profile.ts";
 import type { Store } from "../store/types.ts";
 import { validationHook } from "./hook.ts";
-
-const security = [{ bearerAuth: [] }];
+import { body, errors, json, security } from "./openapi.ts";
 
 const getMe = createRoute({
   method: "get",
@@ -19,8 +17,8 @@ const getMe = createRoute({
   summary: "The signed-in user and their settings (defaults until they change one)",
   security,
   responses: {
-    200: { description: "User and profile", content: { "application/json": { schema: MeSchema } } },
-    ...errorResponses("unauthorized", "forbidden", "rate_limited"),
+    200: json(MeSchema, "User and profile"),
+    ...errors(),
   },
 });
 
@@ -30,15 +28,10 @@ const patchProfile = createRoute({
   tags: ["Profile"],
   summary: "Change some settings; the fields that are not sent keep their value",
   security,
-  request: {
-    body: { required: true, content: { "application/json": { schema: ProfilePatchSchema } } },
-  },
+  request: body(ProfilePatchSchema),
   responses: {
-    200: {
-      description: "The saved profile",
-      content: { "application/json": { schema: ProfileSchema } },
-    },
-    ...errorResponses("validation", "unauthorized", "forbidden", "rate_limited"),
+    200: json(ProfileSchema, "The saved profile"),
+    ...errors("validation"),
   },
 });
 

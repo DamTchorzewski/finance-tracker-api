@@ -66,6 +66,8 @@ export class ApiError extends Error {
   }
 }
 
+export const notFound = (what: string, id: string) => new ApiError("not_found", `No ${what} ${id}`);
+
 export const errorBody = (code: ErrorCode, message: string, issues?: Issue[]): ErrorBody => ({
   error: issues?.length ? { code, message, issues } : { code, message },
 });

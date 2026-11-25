@@ -9,11 +9,15 @@ import { handleError, sendError } from "./lib/errors.ts";
 import { byAddress, rateLimit } from "./lib/rate-limit.ts";
 import type { RatesService } from "./rates/service.ts";
 import { Ledger } from "./ledger/service.ts";
+import { accountsRoutes } from "./routes/accounts.ts";
+import { budgetsRoutes } from "./routes/budgets.ts";
+import { categoriesRoutes } from "./routes/categories.ts";
 import { goalsRoutes } from "./routes/goals.ts";
-import { ledgerRoutes } from "./routes/ledger.ts";
+import { importRoutes } from "./routes/import.ts";
 import { meRoutes } from "./routes/me.ts";
 import { ratesRoutes } from "./routes/rates.ts";
 import { systemRoutes } from "./routes/system.ts";
+import { transactionsRoutes } from "./routes/transactions.ts";
 import type { Store } from "./store/types.ts";
 
 export interface Deps {
@@ -47,7 +51,7 @@ const PRIVATE_PATHS = [
 ];
 
 /** The API under /api: what Firebase Hosting rewrites to Cloud Run, and what runs locally. */
-export function createApi({ env, verifier, store, rates }: Deps) {
+function createApi({ env, verifier, store, rates }: Deps) {
   const api = new OpenAPIHono<AppEnv>();
 
   api.openAPIRegistry.registerComponent("securitySchemes", "bearerAuth", {
@@ -70,7 +74,11 @@ export function createApi({ env, verifier, store, rates }: Deps) {
   for (const path of PRIVATE_PATHS) api.use(`${path}/*`, ...signedIn);
   const ledger = new Ledger(store, rates);
   api.route("/", meRoutes(store));
-  api.route("/", ledgerRoutes(store, ledger));
+  api.route("/", accountsRoutes(store, ledger));
+  api.route("/", categoriesRoutes(store, ledger));
+  api.route("/", budgetsRoutes(store, ledger));
+  api.route("/", transactionsRoutes(store, ledger));
+  api.route("/", importRoutes(ledger));
   api.route("/", goalsRoutes(store, ledger));
 
   return api;

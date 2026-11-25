@@ -121,7 +121,7 @@ src/
   lib/                 errors, sign-in middleware, rate limit, money and dates
   ledger/              the rules across documents: seeding, checks, the frozen PLN value, the import
   rates/               NBP and ECB clients, the rates service and its Firestore cache
-  routes/            ★ one file per resource (system, me, rates, ledger)
+  routes/            ★ one file per resource; openapi.ts: the shared parts of the contract
   schemas/           ★ Zod schemas, the contract
   store/               storage interface; Firestore and in-memory implementations
   test/                test helpers (fake token verifier)

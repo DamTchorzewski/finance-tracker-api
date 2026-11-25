@@ -1,4 +1,4 @@
-import { ApiError } from "../lib/errors.ts";
+import { ApiError, notFound } from "../lib/errors.ts";
 import { toMinor } from "../lib/money.ts";
 import type { RatesService } from "../rates/service.ts";
 import type {
@@ -36,13 +36,22 @@ export class Ledger {
     return this.now().toISOString();
   }
 
+  /** The currency of a new budget or goal when the request names none. */
+  async baseCurrency(uid: string) {
+    return (await this.store.profiles.get(uid))?.baseCurrency ?? DEFAULT_PROFILE.baseCurrency;
+  }
+
+  private async locale(uid: string) {
+    return (await this.store.profiles.get(uid))?.locale ?? DEFAULT_PROFILE.locale;
+  }
+
   async accounts(uid: string) {
     return (await this.store.accounts.list(uid)).sort(byOrder).map(withBalance);
   }
 
   async account(uid: string, id: string) {
     const account = await this.store.accounts.get(uid, id);
-    if (!account) throw new ApiError("not_found", `No account ${id}`);
+    if (!account) throw notFound("account", id);
     return account;
   }
 
@@ -50,7 +59,7 @@ export class Ledger {
   async categories(uid: string): Promise<Category[]> {
     const existing = await this.store.categories.list(uid);
     if (existing.length) return existing.sort(byOrder);
-    const locale = (await this.store.profiles.get(uid))?.locale ?? DEFAULT_PROFILE.locale;
+    const locale = await this.locale(uid);
     const at = this.stamp();
     const created = [];
     for (const [order, seed] of DEFAULT_CATEGORIES.entries()) {
@@ -99,7 +108,7 @@ export class Ledger {
       }
       if (input.categoryId) {
         const category = await this.store.categories.get(uid, input.categoryId);
-        if (!category) throw new ApiError("not_found", `No category ${input.categoryId}`);
+        if (!category) throw notFound("category", input.categoryId);
         if (category.kind !== input.kind) {
           throw new ApiError(
             "validation",
@@ -144,7 +153,7 @@ export class Ledger {
     const byKey = new Map(categories.map((category) => [category.key, category.id]));
 
     const at = this.stamp();
-    const locale = (await this.store.profiles.get(uid))?.locale ?? DEFAULT_PROFILE.locale;
+    const locale = await this.locale(uid);
     const account = await this.store.accounts.create(uid, {
       name: locale === "pl" ? "Portfel (wersja 1)" : "Wallet (version 1)",
       kind: "cash",

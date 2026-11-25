@@ -38,7 +38,7 @@ class FirestoreProfiles implements ProfileStore {
   }
 }
 
-export class FirestoreCollection<T extends { id: string }> implements UserCollection<T> {
+class FirestoreCollection<T extends { id: string }> implements UserCollection<T> {
   private readonly db: Firestore;
   private readonly name: string;
 

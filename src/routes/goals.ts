@@ -1,6 +1,6 @@
 import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 import type { AppEnv } from "../lib/auth.ts";
-import { ApiError, errorResponses } from "../lib/errors.ts";
+import { ApiError, notFound } from "../lib/errors.ts";
 import type { Ledger } from "../ledger/service.ts";
 import { Id, IdParam } from "../schemas/common.ts";
 import {
@@ -12,21 +12,11 @@ import {
   type Goal,
   type StoredGoal,
 } from "../schemas/goals.ts";
-import { DEFAULT_PROFILE } from "../schemas/profile.ts";
 import type { Store } from "../store/types.ts";
 import { validationHook } from "./hook.ts";
+import { body, errors, json, security } from "./openapi.ts";
 
-const security = [{ bearerAuth: [] }];
 const tags = ["Goals"];
-const json = <T extends z.ZodType>(schema: T, description: string) => ({
-  description,
-  content: { "application/json": { schema } },
-});
-const body = <T extends z.ZodType>(schema: T) => ({
-  body: { required: true, content: { "application/json": { schema } } },
-});
-const errors = (...extra: Parameters<typeof errorResponses>) =>
-  errorResponses("unauthorized", "forbidden", "rate_limited", ...extra);
 
 const ContributionParams = z.object({
   id: Id.openapi({ param: { name: "id", in: "path" } }),
@@ -119,7 +109,7 @@ export const goalsRoutes = (store: Store, ledger: Ledger) => {
 
   async function goal(uid: string, id: string) {
     const found = await store.goals.get(uid, id);
-    if (!found) throw new ApiError("not_found", `No goal ${id}`);
+    if (!found) throw notFound("goal", id);
     return found;
   }
 
@@ -148,10 +138,7 @@ export const goalsRoutes = (store: Store, ledger: Ledger) => {
     .openapi(create, async (c) => {
       const { uid } = c.var.user;
       const input = c.req.valid("json");
-      const currency =
-        input.currency ??
-        (await store.profiles.get(uid))?.baseCurrency ??
-        DEFAULT_PROFILE.baseCurrency;
+      const currency = input.currency ?? (await ledger.baseCurrency(uid));
       await checkAccount(uid, input.accountId, currency);
       const at = ledger.stamp();
       const created = await store.goals.create(uid, {
@@ -216,8 +203,7 @@ export const goalsRoutes = (store: Store, ledger: Ledger) => {
       const { uid } = c.var.user;
       const { id, contributionId } = c.req.valid("param");
       const found = await store.contributions.get(uid, contributionId);
-      if (!found || found.goalId !== id)
-        throw new ApiError("not_found", `No contribution ${contributionId}`);
+      if (!found || found.goalId !== id) throw notFound("contribution", contributionId);
       await store.contributions.remove(uid, contributionId);
       return c.body(null, 204);
     });

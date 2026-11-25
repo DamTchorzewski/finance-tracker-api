@@ -17,7 +17,7 @@ import {
 const clone = <T>(value: T): T => structuredClone(value);
 const newId = () => randomUUID().replaceAll("-", "").slice(0, 20);
 
-export class MemoryProfiles implements ProfileStore {
+class MemoryProfiles implements ProfileStore {
   private readonly items = new Map<string, Profile>();
 
   get(uid: string) {
@@ -31,7 +31,7 @@ export class MemoryProfiles implements ProfileStore {
   }
 }
 
-export class MemoryCollection<T extends { id: string }> implements UserCollection<T> {
+class MemoryCollection<T extends { id: string }> implements UserCollection<T> {
   private readonly items = new Map<string, Map<string, T>>();
 
   of(uid: string) {
