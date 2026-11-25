@@ -48,7 +48,7 @@ Google Cloud Run, signs users in with Firebase Authentication and keeps the data
 - **Its own data.** Version 2 writes under `apps/finance-tracker/users/{uid}` in Firestore, apart from version 1, so
   the old app keeps working with the same sign-in accounts.
 
-> **Status:** version 2 in progress (2026-11-21). Done: the foundations, the profile, the currency rates, accounts,
+> **Status:** live (2026-11-25) behind [piggo-finance.web.app](https://piggo-finance.web.app). Done: the foundations, the profile, the currency rates, accounts,
 > categories, transactions, budgets and the import from version 1. Next: recurring transactions, goals and rules
 > (release 2 of the plan). Version 1 of this API is
 > [`personal-finance-manager-api`](https://github.com/DamTchorzewski/personal-finance-manager-api), from which this
@@ -142,8 +142,8 @@ and deploys `main` to Cloud Run with a health check; `weekly.yml` checks the liv
   starts `pnpm start`.
 - **No end-to-end tests:** an API without a browser; the routes are tested through the app in `pnpm test`
   (memory store) and in `pnpm test:emulator` (the Firestore emulator, run by CI; it needs Java 21).
-- **No phone strip and no "Open site" button:** an API has no page for a phone, and it is not deployed yet; the images
-  show its own reference page and a terminal.
+- **No phone strip and no "Open site" button:** an API has no page for a phone and no site of its own; the images show
+  its own reference page and a terminal.
 
 ## Documentation
 
